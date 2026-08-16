@@ -14,7 +14,7 @@
       울산대학교 대략 중심으로 맞춰뒀는데, 필요하면 미세 조정하세요.
 ========================================================= */
 
-const KAKAO_APP_KEY = "dcd6ec2004bcedcb0ecdc49d949485ec";
+const KAKAO_APP_KEY = "e04a691a02ba9bcd97ac10259866e799";
 
 const CAMPUS_CENTER = { lat: 35.5447, lng: 129.2564 }; // 울산대학교 대략 중심
 const CAMPUS_LEVEL = 3; // 숫자가 작을수록 확대됨 (1~14)
