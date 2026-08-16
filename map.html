@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>지도 | Green Campus Map</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="map-page">
+
+  <header class="topbar">
+    <a href="index.html" class="back-link">← 처음으로</a>
+    <h1>울산대학교 캠퍼스 지도</h1>
+    <button id="coordModeBtn" class="coord-toggle" type="button">좌표 찾기 모드</button>
+  </header>
+
+  <div class="map-wrap" id="mapWrap">
+    <div id="kakaoMap" class="kakao-map"></div>
+    <div id="keyMissingNote" class="img-missing-note hidden">
+      <p><strong>카카오 JavaScript 키가 설정되지 않았어요.</strong></p>
+      <p><code>js/config.js</code> 파일의 <code>KAKAO_APP_KEY</code> 자리에
+      카카오 개발자 콘솔에서 발급받은 키를 넣어주세요.</p>
+    </div>
+  </div>
+
+  <p class="coord-readout" id="coordReadout"></p>
+
+  <!-- 건물 클릭 시 뜨는 팝업 -->
+  <div id="buildingModal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose" type="button">닫기</button>
+      <p class="modal-number" id="modalNumber"></p>
+      <h2 id="modalName"></h2>
+
+      <div id="trashSection" class="trash-section hidden">
+        <button class="info-btn" id="infoBtn" type="button">
+          <img src="assets/icons/info.png" alt="" />
+          쓰레기통 위치 보기
+        </button>
+        <p class="trash-detail hidden" id="trashDetail"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 아나바다 등 특수 지점 클릭 시 뜨는 간단 팝업 -->
+  <div id="spotModal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-close" id="spotModalClose" type="button">닫기</button>
+      <h2 id="spotName"></h2>
+      <p id="spotDesc"></p>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/data.js"></script>
+  <!-- autoload=false: 스크립트 로드 후 config.js의 키로 직접 kakao.maps.load() 호출 -->
+  <script>
+    (function loadKakaoSDK() {
+      if (!KAKAO_APP_KEY || KAKAO_APP_KEY.includes("여기에")) {
+        document.getElementById("keyMissingNote").classList.remove("hidden");
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false`;
+      script.onload = () => window.kakao.maps.load(initMap);
+      document.head.appendChild(script);
+    })();
+  </script>
+  <script src="js/script.js"></script>
+</body>
+</html>
