@@ -54,21 +54,10 @@ function renderBuildingPins() {
     addMarker({
       lat: b.lat,
       lng: b.lng,
-      iconSrc: "assets/icons/map.png",
+      iconSrc: "assets/icons/recycle.png",
       label: `${b.number} ${b.name}`,
       onClick: () => openBuildingModal(b),
     });
-
-    if (b.hasTrashBin) {
-      addMarker({
-        lat: b.lat + 0.00012,
-        lng: b.lng + 0.00012,
-        iconSrc: "assets/icons/recycle.png",
-        label: "분리배출함 있음",
-        size: 28,
-        onClick: () => openBuildingModal(b),
-      });
-    }
   });
 }
 
