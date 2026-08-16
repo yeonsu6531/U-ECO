@@ -182,8 +182,9 @@ img { max-width: 100%; display: block; }
 }
 
 .map-layout {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1000px);
+  align-items: start;
   justify-content: center;
   gap: 20px;
   max-width: 1220px;
@@ -192,7 +193,6 @@ img { max-width: 100%; display: block; }
 }
 
 .legend-panel {
-  flex: 0 0 200px;
   background: var(--cream);
   border: 1px solid rgba(31, 77, 51, 0.12);
   border-radius: var(--radius);
@@ -246,11 +246,7 @@ img { max-width: 100%; display: block; }
 
 @media (max-width: 860px) {
   .map-layout {
-    flex-direction: column-reverse;
-    align-items: stretch;
-  }
-  .legend-panel {
-    flex: none;
+    grid-template-columns: 1fr;
   }
   .legend-panel ul {
     flex-direction: row;
@@ -263,7 +259,8 @@ img { max-width: 100%; display: block; }
 
 .map-wrap {
   position: relative;
-  max-width: 1000px;
+  width: 100%;
+  min-width: 0;
   background: #dfe7de;
   border-radius: var(--radius);
   overflow: hidden;
