@@ -1,63 +1,57 @@
 /* =========================================================
-   Green Campus Map - 동작 스크립트 (Kakao Map 실시간 API)
+   Green Campus Map - 동작 스크립트 (Leaflet + OpenStreetMap)
    =========================================================
-   정적 이미지 캡처 대신, 카카오맵을 실시간으로 불러온 뒤
-   그 위에 우리 데이터(data.js)로 커스텀 마커를 얹는 방식입니다.
-   이렇게 하면 캡처 이미지를 쓸 때 생기는 저작권 문제가 없습니다.
+   API 키 없이 바로 동작합니다.
 ========================================================= */
 
-let map; // 카카오맵 인스턴스 (전역)
-let coordModeOn = false;
+let map; // Leaflet 지도 인스턴스
 
-// map.html에서 카카오 SDK 로드가 끝나면 이 함수가 호출됩니다.
 function initMap() {
-  const container = document.getElementById("kakaoMap");
-  const options = {
-    center: new kakao.maps.LatLng(CAMPUS_CENTER.lat, CAMPUS_CENTER.lng),
-    level: CAMPUS_LEVEL,
-  };
-  map = new kakao.maps.Map(container, options);
-
-  // 캠퍼스 범위 밖으로 너무 멀리 나가지 못하게 살짝 막아줌
-  const bounds = new kakao.maps.LatLngBounds(
-    new kakao.maps.LatLng(CAMPUS_BOUNDS.sw.lat, CAMPUS_BOUNDS.sw.lng),
-    new kakao.maps.LatLng(CAMPUS_BOUNDS.ne.lat, CAMPUS_BOUNDS.ne.lng)
+  const bounds = L.latLngBounds(
+    [CAMPUS_BOUNDS.sw.lat, CAMPUS_BOUNDS.sw.lng],
+    [CAMPUS_BOUNDS.ne.lat, CAMPUS_BOUNDS.ne.lng]
   );
-  kakao.maps.event.addListener(map, "dragend", () => {
-    if (!bounds.contain(map.getCenter())) {
-      map.setCenter(new kakao.maps.LatLng(CAMPUS_CENTER.lat, CAMPUS_CENTER.lng));
-    }
+
+  map = L.map("leafletMap", {
+    center: [CAMPUS_CENTER.lat, CAMPUS_CENTER.lng],
+    zoom: CAMPUS_ZOOM,
+    maxBounds: bounds,
+    maxBoundsViscosity: 0.6, // 경계 밖으로 드래그하면 살짝 저항감을 주며 되돌림
+    minZoom: 15,
   });
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  }).addTo(map);
 
   renderBuildingPins();
   renderSpecialSpots();
   setupCoordFinder();
 }
 
-// ---------- 커스텀 마커(오버레이) 만들기 ----------
+// ---------- 커스텀 마커 만들기 ----------
 
-function createOverlay({ lat, lng, iconSrc, label, size, onClick }) {
-  const el = document.createElement("button");
-  el.type = "button";
-  el.className = "pin";
-  el.innerHTML = `
-    <img src="${iconSrc}" alt="${label}" style="width:${size || 34}px;height:${size || 34}px;" />
-    <span class="pin-label">${label}</span>
-  `;
-  el.addEventListener("click", onClick);
-
-  const overlay = new kakao.maps.CustomOverlay({
-    position: new kakao.maps.LatLng(lat, lng),
-    content: el,
-    yAnchor: 1, // 아이콘 뾰족한 아래쪽이 실제 좌표를 가리키도록
+function makeDivIcon(iconSrc, size) {
+  const s = size || 34;
+  return L.divIcon({
+    html: `<img src="${iconSrc}" style="width:${s}px;height:${s}px;display:block;" />`,
+    className: "leaflet-custom-pin",
+    iconSize: [s, s],
+    iconAnchor: [s / 2, s], // 아이콘 하단 중앙이 실제 좌표를 가리키도록
   });
-  overlay.setMap(map);
-  return overlay;
+}
+
+function addMarker({ lat, lng, iconSrc, label, size, onClick }) {
+  const marker = L.marker([lat, lng], { icon: makeDivIcon(iconSrc, size) }).addTo(map);
+  marker.bindTooltip(label, { direction: "top", offset: [0, -(size || 34)] });
+  marker.on("click", onClick);
+  return marker;
 }
 
 function renderBuildingPins() {
   CAMPUS_BUILDINGS.forEach((b) => {
-    createOverlay({
+    addMarker({
       lat: b.lat,
       lng: b.lng,
       iconSrc: "assets/icons/map.png",
@@ -66,8 +60,7 @@ function renderBuildingPins() {
     });
 
     if (b.hasTrashBin) {
-      // 살짝 옆으로 오프셋을 줘서 겹치지 않게 표시
-      createOverlay({
+      addMarker({
         lat: b.lat + 0.00012,
         lng: b.lng + 0.00012,
         iconSrc: "assets/icons/recycle.png",
@@ -82,7 +75,7 @@ function renderBuildingPins() {
 function renderSpecialSpots() {
   SPECIAL_SPOTS.forEach((s) => {
     const iconSrc = s.type === "anabada" ? "assets/icons/anabada.png" : "assets/icons/pin.png";
-    createOverlay({
+    addMarker({
       lat: s.lat,
       lng: s.lng,
       iconSrc,
@@ -93,10 +86,9 @@ function renderSpecialSpots() {
   });
 }
 
-// 내 위치(pin.png) 표시 — 지금은 사용하지 않지만,
-// 나중에 Geolocation API를 붙이면 이 함수만 호출하면 됩니다.
+// 내 위치(pin.png) 표시 — 나중에 Geolocation API 붙일 때 이 함수만 호출하면 됩니다.
 function renderMyLocationPin(lat, lng) {
-  createOverlay({
+  addMarker({
     lat,
     lng,
     iconSrc: "assets/icons/pin.png",
@@ -148,11 +140,12 @@ document.getElementById("spotModalClose").addEventListener("click", () => {
   spotModal.classList.add("hidden");
 });
 
-// ---------- 좌표 찾기 모드 (건물 좌표를 알아낼 때만 사용) ----------
+// ---------- 좌표 찾기 모드 ----------
 
 function setupCoordFinder() {
   const coordModeBtn = document.getElementById("coordModeBtn");
   const coordReadout = document.getElementById("coordReadout");
+  let coordModeOn = false;
 
   coordModeBtn.addEventListener("click", () => {
     coordModeOn = !coordModeOn;
@@ -162,11 +155,13 @@ function setupCoordFinder() {
       : "";
   });
 
-  kakao.maps.event.addListener(map, "click", (mouseEvent) => {
+  map.on("click", (e) => {
     if (!coordModeOn) return;
-    const latlng = mouseEvent.latLng;
-    const text = `lat: ${latlng.getLat().toFixed(6)}, lng: ${latlng.getLng().toFixed(6)}`;
+    const text = `lat: ${e.latlng.lat.toFixed(6)}, lng: ${e.latlng.lng.toFixed(6)}`;
     coordReadout.textContent = text;
     console.log(text);
   });
 }
+
+// ---------- 시작 ----------
+initMap();
