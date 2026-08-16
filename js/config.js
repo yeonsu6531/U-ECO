@@ -9,8 +9,8 @@
    CAMPUS_BOUNDS: 이 범위 밖으로 드래그해서 못 나가게 막는 사각형 경계
 ========================================================= */
 
-const CAMPUS_CENTER = { lat: 35.5447, lng: 129.2564 }; // 울산대학교 대략 중심
-const CAMPUS_ZOOM = 17;
+const CAMPUS_CENTER = { lat: 35.5445, lng: 129.2575 };
+const CAMPUS_ZOOM = 16;
 
 const CAMPUS_BOUNDS = {
   sw: { lat: 35.5390, lng: 129.2480 },
